@@ -37,7 +37,7 @@ final class SearchPresenter {
     }
     
     private func requestApps(with query: String) {
-        self.searchService.getApps(forQuery: query) { [weak self] (result) in
+        interactor.requestApps(with: query) { [weak self] (result) in
             guard let self = self else { return }
             
             self.viewInput?.throbber(show: false)
