@@ -1,15 +1,14 @@
 //
-//  AppDetailView.swift
+//  SongDetailView.swift
 //  iOSArchitecturesDemo
 //
-//  Created by Evgeny Kireev on 02/06/2019.
-//  Copyright © 2019 ekireev. All rights reserved.
+//  Created by Sky on 22.11.2020.
+//  Copyright © 2020 ekireev. All rights reserved.
 //
 
 import UIKit
 
-final class AppDetailView: UIView {
-    
+class SongDetailView: UIView {
     // MARK: - Subviews
     
     let imageView = UIImageView()
@@ -41,6 +40,7 @@ final class AppDetailView: UIView {
         self.imageView.backgroundColor = UIColor.gray.withAlphaComponent(0.5)
         self.imageView.layer.cornerRadius = 10.0
         self.imageView.layer.masksToBounds = true
+        imageView.image = UIImage(systemName: "music.note")
         self.addSubview(self.imageView)
     }
     

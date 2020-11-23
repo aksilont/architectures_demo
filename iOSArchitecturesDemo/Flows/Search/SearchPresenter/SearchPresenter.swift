@@ -9,7 +9,7 @@
 import UIKit
 
 protocol SearchViewInput: AnyObject {
-    var searchResults: [ITunesApp] { get set }
+    var searchResults: [AnyObject] { get set }
     
     func showError(error: Error)
     func showNoResults()
@@ -28,6 +28,14 @@ final class SearchPresenter {
     
     private let searchService = ITunesSearchService()
     
+    let interactor: SearchInteractorInput
+    let router: SearchRouterInput
+    
+    init(interactor: SearchInteractorInput, router: SearchRouterInput) {
+        self.interactor = interactor
+        self.router = router
+    }
+    
     private func requestApps(with query: String) {
         self.searchService.getApps(forQuery: query) { [weak self] (result) in
             guard let self = self else { return }
@@ -40,7 +48,27 @@ final class SearchPresenter {
                         return
                     }
                     self.viewInput?.hideNoResults()
-                    self.viewInput?.searchResults = apps
+                    self.viewInput?.searchResults = apps as [AnyObject]
+                }
+                .withError { (error) in
+                    self.viewInput?.showError(error: error)
+                }
+        }
+    }
+    
+    private func requestData(with query: String) {
+        self.searchService.getApps(forQuery: query) { [weak self] (result) in
+            guard let self = self else { return }
+            
+            self.viewInput?.throbber(show: false)
+            result
+                .withValue { (apps) in
+                    guard !apps.isEmpty else {
+                        self.viewInput?.showNoResults()
+                        return
+                    }
+                    self.viewInput?.hideNoResults()
+                    self.viewInput?.searchResults = apps as [AnyObject]
                 }
                 .withError { (error) in
                     self.viewInput?.showError(error: error)
@@ -62,6 +90,6 @@ extension SearchPresenter: SearchViewOutput {
     }
     
     func viewDidSelectApp(app: ITunesApp) {
-        openAppDetails(with: app)
+        router.openAppDetails(for: app)
     }
 }

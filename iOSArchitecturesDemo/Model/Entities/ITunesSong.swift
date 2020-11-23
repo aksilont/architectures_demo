@@ -24,6 +24,13 @@ public struct ITunesSong: Codable {
         case artwork = "artworkUrl100"
     }
     
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.trackName = try container.decode(String.self, forKey: .trackName)
+        self.collectionName = try? container.decode(String.self, forKey: .collectionName)
+        self.artwork = try? container.decode(String.self, forKey: .artwork)
+    }
+    
     // MARK: - Init
     
     internal init(trackName: String,

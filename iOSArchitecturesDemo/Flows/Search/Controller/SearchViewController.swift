@@ -8,6 +8,10 @@
 
 import UIKit
 
+enum ContentType: Int {
+    case app, song
+}
+
 final class SearchViewController: UIViewController {
     
     // MARK: - Private Properties
@@ -18,8 +22,10 @@ final class SearchViewController: UIViewController {
         return self.view as! SearchView
     }
     
+    private var contentType: ContentType = .app
+    
     private let searchService = ITunesSearchService()
-    var searchResults = [ITunesApp]() {
+    var searchResults = [AnyObject]() {
         didSet {
             searchView.tableView.isHidden = false
             searchView.tableView.reloadData()
@@ -28,7 +34,8 @@ final class SearchViewController: UIViewController {
     }
     
     private struct Constants {
-        static let reuseIdentifier = "reuseId"
+        static let reuseIdentifierApp = "reuseIdApp"
+        static let reuseIdentifierSong = "reuseIdSong"
     }
     
     //MARK: - Init
@@ -46,14 +53,16 @@ final class SearchViewController: UIViewController {
     
     override func loadView() {
         super.loadView()
-        self.view = SearchView()
+        view = SearchView()
+        searchView.searchType.addTarget(self, action: #selector(searchTypeChange), for: .valueChanged)
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationController?.navigationBar.prefersLargeTitles = true
         self.searchView.searchBar.delegate = self
-        self.searchView.tableView.register(AppCell.self, forCellReuseIdentifier: Constants.reuseIdentifier)
+        self.searchView.tableView.register(AppCell.self, forCellReuseIdentifier: Constants.reuseIdentifierApp)
+        self.searchView.tableView.register(SongCell.self, forCellReuseIdentifier: Constants.reuseIdentifierSong)
         self.searchView.tableView.delegate = self
         self.searchView.tableView.dataSource = self
     }
@@ -61,6 +70,13 @@ final class SearchViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.throbber(show: false)
+    }
+    
+    @objc func searchTypeChange(_ segmentedControl: UISegmentedControl) {
+        contentType = ContentType.init(rawValue: segmentedControl.selectedSegmentIndex) ?? .app
+        searchResults = []
+        self.searchView.searchBar.text = nil
+        searchView.tableView.reloadData()
     }
 }
 
@@ -72,14 +88,26 @@ extension SearchViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let dequeuedCell = tableView.dequeueReusableCell(withIdentifier: Constants.reuseIdentifier, for: indexPath)
-        guard let cell = dequeuedCell as? AppCell else {
-            return dequeuedCell
+        switch contentType {
+        case .app:
+            let dequeuedCell = tableView.dequeueReusableCell(withIdentifier: Constants.reuseIdentifierApp, for: indexPath)
+            guard let cell = dequeuedCell as? AppCell else {
+                return dequeuedCell
+            }
+            let app = self.searchResults[indexPath.row] as! ITunesApp
+            let cellModel = AppCellModelFactory.cellModel(from: app)
+            cell.configure(with: cellModel)
+            return cell
+        case .song:
+            let dequeuedCell = tableView.dequeueReusableCell(withIdentifier: Constants.reuseIdentifierSong, for: indexPath)
+            guard let cell = dequeuedCell as? SongCell else {
+                return dequeuedCell
+            }
+            let song = self.searchResults[indexPath.row] as! ITunesSong
+            let cellModel = SongCellModelFactory.cellModel(from: song)
+            cell.configure(with: cellModel)
+            return cell
         }
-        let app = self.searchResults[indexPath.row]
-        let cellModel = AppCellModelFactory.cellModel(from: app)
-        cell.configure(with: cellModel)
-        return cell
     }
 }
 
@@ -88,7 +116,7 @@ extension SearchViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let app = searchResults[indexPath.row]
+        let app = searchResults[indexPath.row] as! ITunesApp
         let appDetaillViewController = AppDetailViewController(app: app)
         appDetaillViewController.app = app
         presenter.viewDidSelectApp(app: app)

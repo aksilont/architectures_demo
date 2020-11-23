@@ -12,6 +12,7 @@ final class SearchView: UIView {
     
     // MARK: - Subviews
     
+    let searchType = UISegmentedControl()
     let searchBar = UISearchBar()
     let tableView = UITableView()
     let emptyResultView = UIView()
@@ -33,10 +34,19 @@ final class SearchView: UIView {
     
     private func configureUI() {
         self.backgroundColor = .white
+        addSearchType()
         self.addSearchBar()
         self.addTableView()
         self.addEmptyResultView()
         self.setupConstraints()
+    }
+    
+    private func addSearchType() {
+        searchType.translatesAutoresizingMaskIntoConstraints = false
+        searchType.insertSegment(withTitle: "Apps", at: 0, animated: false)
+        searchType.insertSegment(withTitle: "Songs", at: 1, animated: false)
+        searchType.selectedSegmentIndex = 0
+        addSubview(searchType)
     }
     
     private func addSearchBar() {
@@ -73,7 +83,10 @@ final class SearchView: UIView {
         let safeArea = self.safeAreaLayoutGuide
         
         NSLayoutConstraint.activate([
-            self.searchBar.topAnchor.constraint(equalTo: self.topAnchor, constant: 8.0),
+            searchType.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 8.0),
+            searchType.centerXAnchor.constraint(equalTo: centerXAnchor),
+            
+            self.searchBar.topAnchor.constraint(equalTo: searchType.bottomAnchor, constant: 8.0),
             self.searchBar.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor),
             self.searchBar.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor),
             
