@@ -116,10 +116,18 @@ extension SearchViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let app = searchResults[indexPath.row] as! ITunesApp
-        let appDetaillViewController = AppDetailViewController(app: app)
-        appDetaillViewController.app = app
-        presenter.viewDidSelectApp(app: app)
+        switch contentType {
+        case .app:
+            let app = searchResults[indexPath.row] as! ITunesApp
+            let appDetaillViewController = AppDetailViewController(app: app)
+            appDetaillViewController.app = app
+            presenter.viewDidSelectApp(app: app)
+        case .song:
+            let song = searchResults[indexPath.row] as! ITunesSong
+            let songDetaillViewController = SongDetailViewController(song: song)
+            songDetaillViewController.song = song
+            presenter.viewDidSelectSong(song: song)
+        }
     }
 }
 
@@ -135,7 +143,7 @@ extension SearchViewController: UISearchBarDelegate {
             searchBar.resignFirstResponder()
             return
         }
-        presenter.viewDidSearch(with: query)
+        presenter.viewDidSearch(with: query, type: contentType)
     }
 }
 

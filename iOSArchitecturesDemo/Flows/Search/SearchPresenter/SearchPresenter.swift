@@ -18,8 +18,9 @@ protocol SearchViewInput: AnyObject {
 }
 
 protocol SearchViewOutput: AnyObject {
-    func viewDidSearch(with query: String)
+    func viewDidSearch(with query: String, type: ContentType)
     func viewDidSelectApp(app: ITunesApp)
+    func viewDidSelectSong(song: ITunesSong)
 }
 
 final class SearchPresenter {
@@ -36,60 +37,61 @@ final class SearchPresenter {
         self.router = router
     }
     
-    private func requestApps(with query: String) {
-        interactor.requestApps(with: query) { [weak self] (result) in
-            guard let self = self else { return }
-            
-            self.viewInput?.throbber(show: false)
-            result
-                .withValue { (apps) in
-                    guard !apps.isEmpty else {
-                        self.viewInput?.showNoResults()
-                        return
+    private func requestData(with query: String, type: ContentType) {
+        switch type {
+        case .app:
+            interactor.requestApps(with: query) { [weak self] (result) in
+                guard let self = self else { return }
+                
+                self.viewInput?.throbber(show: false)
+                result
+                    .withValue { (apps) in
+                        guard !apps.isEmpty else {
+                            self.viewInput?.showNoResults()
+                            return
+                        }
+                        self.viewInput?.hideNoResults()
+                        self.viewInput?.searchResults = apps as [AnyObject]
                     }
-                    self.viewInput?.hideNoResults()
-                    self.viewInput?.searchResults = apps as [AnyObject]
-                }
-                .withError { (error) in
-                    self.viewInput?.showError(error: error)
-                }
-        }
-    }
-    
-    private func requestData(with query: String) {
-        self.searchService.getApps(forQuery: query) { [weak self] (result) in
-            guard let self = self else { return }
-            
-            self.viewInput?.throbber(show: false)
-            result
-                .withValue { (apps) in
-                    guard !apps.isEmpty else {
-                        self.viewInput?.showNoResults()
-                        return
+                    .withError { (error) in
+                        self.viewInput?.showError(error: error)
                     }
-                    self.viewInput?.hideNoResults()
-                    self.viewInput?.searchResults = apps as [AnyObject]
-                }
-                .withError { (error) in
-                    self.viewInput?.showError(error: error)
-                }
+            }
+        case .song:
+            interactor.requestSong(with: query) { [weak self] (result) in
+                guard let self = self else { return }
+                
+                self.viewInput?.throbber(show: false)
+                result
+                    .withValue { (songs) in
+                        guard !songs.isEmpty else {
+                            self.viewInput?.showNoResults()
+                            return
+                        }
+                        self.viewInput?.hideNoResults()
+                        self.viewInput?.searchResults = songs as [AnyObject]
+                    }
+                    .withError { (error) in
+                        self.viewInput?.showError(error: error)
+                    }
+            }
         }
-    }
-    
-    private func openAppDetails(with app: ITunesApp) {
-        let appDetailViewController = AppDetailViewController(app: app)
-        viewInput?.navigationController?.pushViewController(appDetailViewController, animated: true)
+        
     }
 }
 
 extension SearchPresenter: SearchViewOutput {
     
-    func viewDidSearch(with query: String) {
+    func viewDidSearch(with query: String, type: ContentType) {
         viewInput?.throbber(show: true)
-        requestApps(with: query)
+        requestData(with: query, type: type)
     }
     
     func viewDidSelectApp(app: ITunesApp) {
         router.openAppDetails(for: app)
+    }
+    
+    func viewDidSelectSong(song: ITunesSong) {
+        router.openSongDetails(for: song)
     }
 }

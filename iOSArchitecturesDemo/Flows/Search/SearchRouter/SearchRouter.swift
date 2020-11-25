@@ -11,6 +11,7 @@ import UIKit
 protocol SearchRouterInput {
     func openAppDetails(for app: ITunesApp)
     func openAppInITunes(_ app: ITunesApp)
+    func openSongDetails(for song: ITunesSong)
 }
 
 final class SearchRouter: SearchRouterInput {
@@ -26,5 +27,10 @@ final class SearchRouter: SearchRouterInput {
             return
         }
         UIApplication.shared.open(url, options: [:], completionHandler: nil)
+    }
+    
+    func openSongDetails(for song: ITunesSong) {
+        let songDetailViewController = SongDetailViewController(song: song)
+        viewController?.navigationController?.pushViewController(songDetailViewController, animated: true)
     }
 }
